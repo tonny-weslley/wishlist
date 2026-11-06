@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync(__dirname+'/assets/js/products.js','utf8')+'\n'+fs.readFileSync(__dirname+'/assets/js/app.js','utf8');let counter=0;const WishlistSchema=require('./assets/js/schema.js');const ctx={WishlistSchema,uid:()=>`test-${++counter}`,safeUrl:s=>{try{const u=new URL(s);return /^https?:$/.test(u.protocol)?u.href:''}catch{return ''}}};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(__dirname+'/assets/js/products.js','utf8'),ctx);
+const item={name:'Violão',url:'https://example.com/p',price:5999,currency:'BRL',category:'Música',priority:'high'};
+const old=[{name:'Música',items:[item,{name:'Cabo',price:79.9,category:'Acessórios'}]},{name:'Estúdio',items:[item]}];const snapshot=JSON.stringify(old);const s=ctx.decodeStore(old);
+assert.equal(s.items.length,2);assert.equal(s.lists[0].itemIds[0],s.lists[1].itemIds[0]);assert.equal(JSON.stringify(old),snapshot);
+const id=s.items[0].id,copy=ctx.decodeStore(JSON.parse(JSON.stringify(s)));assert.equal(copy.items[0].id,id);assert.equal(copy.items[0].category,'Música');assert.equal(copy.lists[1].itemIds[0],id);
+let stats=ctx.categoryStats([{category:'Música'},{category:'música'},{category:'Casa'}]);assert.equal(stats[0].count,2);assert.equal(stats.reduce((n,r)=>n+r.percent,0),100);
+stats=ctx.categoryStats([{category:'A'},{category:'B'},{category:'C'}]);assert.equal(stats.reduce((n,r)=>n+r.percent,0),100);assert.equal(stats.filter(r=>r.count===stats[0].count).length,3);assert.equal(ctx.categoryStats([]).length,0);assert.equal(ctx.categoryStats([{category:''}])[0].name,'Sem categoria');
+assert.throws(()=>ctx.decodeStore({version:2,items:[{name:''}],lists:[]}));
+ctx.store=copy;ctx.selected='__general__';ctx.current=()=>({itemIds:ctx.store.items.map(i=>i.id)});
+const reorder=source.slice(source.indexOf('function reorderScope('),source.indexOf("$('#panel').addEventListener('dragstart'"));vm.runInContext(reorder,ctx);const localBefore=copy.lists[0].itemIds.join();ctx.reorderScope(copy.items[1].id,copy.items[0].id,false);assert.equal(copy.lists[0].itemIds.join(),localBefore);assert.notEqual(copy.items[0].id,id);
+const globalBefore=copy.items.map(i=>i.id).join();ctx.selected=copy.lists[0].id;ctx.current=()=>copy.lists[0];ctx.reorderScope(copy.lists[0].itemIds[1],copy.lists[0].itemIds[0],false);assert.equal(copy.items.map(i=>i.id).join(),globalBefore);assert.equal(copy.lists[1].itemIds[0],id);
+console.log('Migração, produto compartilhado, prioridades independentes, categorias, empates e percentuais: OK');

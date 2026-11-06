@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Wishlist · capturar produto",
+  "version": "3.2.0",
+  "description": "Capture produtos e recupere rascunhos para sua Wishlist web.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "action": {
+    "default_title": "Adicionar ao Wishlist",
+    "default_popup": "popup.html"
+  },
+  "minimum_chrome_version": "120"
+}

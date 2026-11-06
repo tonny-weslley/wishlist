@@ -1,0 +1,6 @@
+(function(root){
+'use strict';
+// Structured machine values always use a decimal point. Visible text follows the page locale/currency.
+function parsePrice(value,{structured=false,locale='pt-BR',currency='BRL'}={}){if(typeof value==='number')return Number.isFinite(value)&&value>=0&&value<1e12?value:null;if(typeof value!=='string'||!value.trim()||/-/.test(value))return null;let s=value.trim();if(!structured&&(/\d\s*[x×]|parcelas?|por\s+m[eê]s|\/m[eê]s/i.test(s)))return null;s=s.replace(/[^\d,.]/g,'');if(!s)return null;if(structured&&/^\d+(\.\d+)?$/.test(s)){const n=Number(s);return n<1e12?n:null}const comma=s.lastIndexOf(','),dot=s.lastIndexOf('.');if(comma>=0&&dot>=0)s=comma>dot?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(comma>=0){const decimal=locale.toLowerCase().startsWith('en')&&currency!=='BRL'?false:true;s=decimal?s.replace(',','.'):s.replace(/,/g,'')}else if(dot>=0){const isThousands=!structured&&(/^(pt|de|es|it)/i.test(locale)||currency==='BRL')&&/^\d{1,3}(\.\d{3})+$/.test(s);s=isThousands?s.replace(/\./g,''):s}const n=Number(s);return Number.isFinite(n)&&n>=0&&n<1e12?Math.round(n*100)/100:null}
+root.WishlistPrices={parsePrice};if(typeof module!=='undefined')module.exports=root.WishlistPrices;
+})(typeof globalThis!=='undefined'?globalThis:this);

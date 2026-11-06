@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const s=fs.readFileSync(__dirname+'/assets/js/products.js','utf8')+'\n'+fs.readFileSync(__dirname+'/assets/js/app.js','utf8'),ctx={URL,uid:()=>Math.random().toString(36)};vm.createContext(ctx);
+vm.runInContext(s.slice(s.indexOf('function normalizedProductUrl('),s.indexOf('function mergeImportedStore(')),ctx);
+const existing={id:'old',name:'Original',price:500,url:'https://EXAMPLE.com:443/product?v=1#top'};
+assert.equal(ctx.findDuplicateUrl([existing],' https://example.com/product?v=1#bottom ').id,'old');
+assert.equal(ctx.findDuplicateUrl([existing],'https://example.com/product?v=2'),null);
+assert.equal(ctx.findDuplicateUrl([existing],existing.url,'old'),null);
+assert.equal(ctx.findDuplicateUrl([existing],''),null);assert.equal(ctx.findDuplicateUrl([existing],'javascript:alert(1)'),null);
+vm.runInContext(s.slice(s.indexOf('function normalizeOfferGroups('),s.indexOf('function decodeStore(')),ctx);
+vm.runInContext(s.slice(s.indexOf('function mergeImportedStore('),s.indexOf('// A cloud merge')),ctx);
+const target={items:[existing],lists:[]},incoming={items:[{id:'in',url:'https://example.com/product?v=1',name:'Outro nome',price:10},{id:'new',url:'https://example.com/new',name:'Novo'}],lists:[{id:'l',name:'Lista',itemIds:['in','new']}]};
+const result=ctx.mergeImportedStore(target,incoming);assert.equal(result.reused,1);assert.equal(result.added,1);assert.equal(target.items.length,2);assert.equal(existing.price,500);assert.equal(existing.name,'Original');assert.equal(target.lists[0].itemIds[0],'old');assert.equal(target.lists[0].itemIds.length,2);
+console.log('Duplicidade por URL, edição do próprio item, importação com reutilização e preservação dos dados: OK');

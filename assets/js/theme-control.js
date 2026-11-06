@@ -1,0 +1,1 @@
+document.getElementById('themeMode').addEventListener('change',event=>window.wishlistTheme.set(event.target.value));window.wishlistTheme.apply();
